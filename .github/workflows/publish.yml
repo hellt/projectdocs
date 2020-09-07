@@ -1,0 +1,22 @@
+name: publish
+on:
+  push:
+    branches:
+      - "master"
+    paths:
+      - "docs/**"
+
+# this commented out example triggers workflows on tagged release
+# OR pushes to a specific documentation branches which name starts with `docs-`
+# on:
+#   push:
+#     branches:
+#       - "refs/tags/v*"
+#       - "docs-*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker run -v $(pwd):/docs --entrypoint mkdocs squidfunk/mkdocs-material:5.5.12 gh-deploy --force --strict
