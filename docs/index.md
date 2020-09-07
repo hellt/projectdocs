@@ -102,3 +102,59 @@ jobs:
 ```
 
 With this workflow this documentation site is built and published when the `push` event happens on master branch and anything under the `docs` directory is changed. The commented part is for the case where I want to sync my documentation to a release cycle.
+
+Once pushed, the workflow process can be monitored in [Actions panel](https://github.com/hellt/projectdocs/actions).
+
+Note, that the `publish` job runs mkdocs-material docker container and deploys the documentation. With that command mkdocs takes the source documentation from the `/docs` directory, builds the static site and pushes it to the remote repository at a specific branch named `gh-pages`[^1].
+
+## Configuring github pages
+Once you did your first push and the `publish` workflow has been completed successfully you need to configure Github Pages service to serve your documentation from the [`gh-pages` branch](https://github.com/hellt/projectdocs/tree/gh-pages) where your static site is.
+
+To do so, you need to drill down to the project's Settings->GitHub Pages section and select that branch, keeping the `root` folder:
+
+![pages](https://gitlab.com/rdodin/pics/-/wikis/uploads/12130dec0bdf794359d36e6b7f39f8d6/image.png)
+
+???info "How to find the Github Pages settings"
+    ![animation](https://gitlab.com/rdodin/pics/-/wikis/uploads/f25b6fca7df6ab636427dbbffffd49bf/CleanShot_2020-09-07_at_21.43.57.gif)
+
+
+After this step your documentation will be served at `https://<username>.github.io/<project-name>` with TLS certificates provided by Github. Life is good, you can stop here, unless you want to add a custom domain name.
+
+## Custom domain
+Hands down, but `project-name.your-domain.com` is 3.14 times better than `<username>.github.io/<project-name>`. So lets see how can we add subdomain to our documentation site hosted by Github pages.
+
+!!!note
+    you need to have a domain registed in your name to proceed. It doesn't matter which DNS manager you will user.
+
+I own `netdevops.me` domain and my goal is to serve this documentation from `projectdocs.netdevops.me`. Here is what I needed to do.
+
+### Creating a CNAME DNS record
+In my DNS provider (Cloudflare in my case) I first needed to create a CNAME record that will point the chosen subdomain (`projectdocs`) to the Github Pages site for my user (`hellt.github.io`). The Github Pages site for a user follows a simple pattern of `<username>.github.io`
+
+![cname](https://gitlab.com/rdodin/pics/-/wikis/uploads/15ec6e8ff2a7d35baa1f69ee3c6f3ea9/image.png)
+
+### Adding CNAME file to docs dir
+Once the DNS record is created add a [CNAME](https://github.com/hellt/projectdocs/blob/master/docs/CNAME) file to the docs directory which will contain the desired FQDN for a doc site. This file will be used by `mkdocs gh-deploy` command at publish stage to configure Github Pages to take this custom domain name into consideration.
+
+### Trigger documentation build
+When the `CNAME` is ready, trigger the documentation build by adding documentation. Once the workflow completes, you should notice that Github Pages settings section reflects the custom domain you provided within `CNAME` file:
+
+![custom_domain](https://gitlab.com/rdodin/pics/-/wikis/uploads/ac5909bb6bb8f9f8fec38955051139d9/image.png)
+
+### TLS for custom domain
+If the configuration sequence I explained here was respected, you will notice that "Enforce HTTPS" checkmark is available to select. That means that Github created certificats for your custom domain and is ready to use them and redirect HTTP requests to HTTPS schema. Check this mark and celebrate!
+
+![tls](https://gitlab.com/rdodin/pics/-/wikis/uploads/2b8a85813cac4b8569c8b18c4c048671/image.png)
+
+If "Enforce HTTPS" renders non-selectable, remove the custom domain, hit "Save", add it again, click Save. You should see the certificates regeneration animation to appear.
+
+Now you are officially done!
+
+---
+
+> If you like what I'm doing here and in a mood for sending a token of appreciation, you can leave a comment, or use one of the buttons below  
+> <iframe src="https://github.com/sponsors/hellt/button" title="Sponsor hellt" height="35" width="107" style="border: 0;"></iframe>
+
+> <style>.bmc-button img{height: 20px !important;width: 20px !important;margin-bottom: 1px !important;box-shadow: none !important;border: none !important;vertical-align: middle !important;}.bmc-button{padding: 7px 15px 7px 10px !important;line-height: 20px !important;text-decoration: none !important;display:inline-flex !important;color:#FFFFFF !important;background-color:#FF813F !important;border-radius: 5px !important;border: 1px solid transparent !important;padding: 7px 15px 7px 10px !important;font-size: 20px !important;letter-spacing:-0.08px !important;margin: 0 auto !important;font-family:'Lato', sans-serif !important;-webkit-box-sizing: border-box !important;box-sizing: border-box !important;}.bmc-button:hover, .bmc-button:active, .bmc-button:focus {-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;text-decoration: none !important;box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;opacity: 0.85 !important;color:#FFFFFF !important;}</style><link href="https://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext" rel="stylesheet"><a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/ntdvps"><img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy me a coffee"><span style="margin-left:5px;font-size:14px !important;">For a coffee</span></a>
+
+[^1]: as explained in the [docs](https://www.mkdocs.org/user-guide/deploying-your-docs/#project-pages)
